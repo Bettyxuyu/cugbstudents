@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大木山茶园</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* 主页样式 */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+
+        .homepage {
+            position: relative;
+            height: 100vh;
+            background-image: url('https://i.ibb.co/ZRHvWwnw/sbl.jpg');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+        }
+
+            .homepage::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0, 0, 0, 0.1);
+            }
+
+        .home-content {
+            position: relative;
+            z-index: 1;
+            max-width: 800px;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 2rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .btn-container {
+            display: flex;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .nav-btn {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid white;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+
+            .nav-btn:hover {
+                background-color: rgba(255, 255, 255, 0.4);
+                transform: translateY(-5px);
+            }
+
+        /* 地图页面样式 */
+        .page {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: #f5f5f5;
+        }
+
+        #map-page {
+            padding: 0;
+        }
+
+        #map {
+            height: 100vh;
+        }
+
+        .custom-popup img {
+            width: 250px;
+            border: 3px solid #8BC34A;
+            border-radius: 5px;
+        }
+
+        /* 十景页面样式 */
+        #.scenery-page {
+            height: 100vh;
+            background: #eaeaea;
+            overflow: hidden;
+            display: grid;
+            place-items: center;
+        }
+
+        .scenery-page .* {
+            margin: 0; /* 移除所有元素的外边距 */
+            padding: 0; /* 移除所有元素的内边距 */
+            box-sizing: border-box; /* 设置盒模型为border-box，宽度包含padding和border */
+        }
+        .container {
+            position: relative; /* 设置为相对定位，作为子元素绝对定位的参照 */
+            width: 800px; /* 固定宽度800px */
+            height: 480px; /* 固定高度480px */
+            background: #f5f5f5; /* 背景颜色为浅白色 */
+            box-shadow: 0 30px 50px #dbdbdb; /* 添加阴影效果 */
+            margin: 0 auto;
+            transform: translateY(20%);
+        }
+
+        .container .slide .item {
+                width: 165px;
+                height: 250px;
+                position: absolute;
+                top: 50%;
+                transform: translate(0, -50%);
+                border-radius: 20px;
+                box-shadow: 0 30px 50px #505050;
+                background-position: 50% 50%;
+                background-size: cover;
+                display: inline-block;
+                transition: 0.5s;
+            }
+
+        .slide .item:nth-child(1),
+        .slide .item:nth-child(2) {
+            top: 0; /* 顶部对齐 */
+            left: 0; /* 左侧对齐 */
+            transform: translate(0,0); /* 取消垂直居中 */
+            border-radius: 0; /* 无圆角 */
+            width: 100%; /* 宽度100% */
+            height: 100%; /* 高度100% */
+        }
+
+        .slide .item:nth-child(3) {
+            left: calc(50% + 210px); /* 左侧定位在50%加210px */
+        }
+
+        .slide .item:nth-child(4) {
+            left: calc(50% + 430px); /* 左侧定位在50%加430px */
+        }
+
+        .slide .item:nth-child(n+5) {
+            left: calc(50% + 650px); /* 第6个及以后的项定位在50%加650px */
+            opacity: 0; /* 完全透明(不可见) */
+        }
+
+        .item .content {
+            position: absolute; /* 绝对定位 */
+            top: 50%; /* 顶部在父元素50%位置 */
+            left: 100px; /* 左侧偏移100px */
+            width: 300px; /* 宽度300px */
+            text-align: left; /* 文字左对齐 */
+            color: #eee; /* 文字颜色浅灰色 */
+            transform: translate(0,-50%); /* 垂直居中 */
+            font-family: system-ui; /* 使用系统默认UI字体 */
+            display: none; /* 默认不显示 */
+        }
+
+        .slide .item:nth-child(2) .content {
+            display: block;
+        }
+
+        @keyframes animate {
+            from {
+                opacity: 0;
+                transform: translate(0,100px);
+                filter: blur(33px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translate(0);
+                filter: blur(0);
+            }
+        }
+
+        .content .name {
+            font-size: 40px;
+            text-transform: uppercase;
+            font-weight: bold;
+            opacity: 0;
+            animation: animate 1s ease-in-out 1 forwards;
+        }
+
+        .content .des {
+            margin-top: 10px;
+            margin-bottom: 20px;
+            opacity: 0;
+            animation: animate 1s ease-in-out 0.3s 1 forwards;
+        }
+
+        .content button {
+            padding: 10px 20px;
+            background-color: transparent;
+            color: white;
+            border: 1px solid white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+            .content button:hover {
+                background-color: rgba(255, 255, 255, 0.2);
+            }
+
+        .button {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+        }
+
+            .button button {
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+                background-color: rgba(0, 0, 0, 0.5);
+                color: white;
+                border: none;
+                cursor: pointer;
+                font-size: 1.2rem;
+                transition: all 0.3s;
+            }
+
+                .button button:hover {
+                    background-color: rgba(0, 0, 0, 0.8);
+                }
+
+        /* 返回按钮 */
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            padding: 10px 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+            .back-btn:hover {
+                background-color: rgba(0, 0, 0, 0.9);
+            }
+    </style>
+</head>
+<body>
+    <!-- 主页 -->
+    <div id="homepage" class="homepage">
+        <div class="home-content">
+            <h1>欢迎来到大木山茶园</h1>
+            <div class="btn-container">
+                <button class="nav-btn" onclick="showPage('map-page')">地图导览</button>
+                <button class="nav-btn" onclick="showPage('scenery-page')">木山十景</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 地图页面 -->
+    <div id="map-page" class="page">
+        <button class="back-btn" onclick="backToHome()"><i class="fas fa-arrow-left"></i> 返回首页</button>
+        <div id="map"></div>
+    </div>
+
+    <!-- 十景页面 -->
+    <div id="scenery-page" class="page">
+        <button class="back-btn" onclick="backToHome()"><i class="fas fa-arrow-left"></i> 返回首页</button>
+        <div class="container">
+            <div class="slide">
+                <div class="item" style="background-image: url('https://i.ibb.co/HLrNVy1C/rzjs.jpg>');">
+                    <div class="content">
+                        <div class="name">日照金山</div>
+                    </div>
+                </div>
+                <div class="item" style="background-image: url('https://i.ibb.co/BHZ2n2hG/bjt.jpg');">
+                    <div class="content">
+                        <div class="name">航拍茶田</div>
+                    </div>
+                </div>
+                <div class="item" style="background-image: url('https://i.ibb.co/QjKkwmbz/hhc.jpg');">
+                    <div class="content">
+                        <div class="name">荷影流波</div>
+                        <div class="des">池畔荷叶田田，夏季映日荷花，景色清雅怡人</div>
+                    </div>
+                </div>
+                <div class="item" style="background-image: url('https://i.ibb.co/Kc6ktXZh/cs.jpg');">
+                    <div class="content">
+                        <div class="name">大木山茶室</div>
+                        <div class="des">古朴与现代的碰撞，于2015年登上福布斯最权威的底刊，被评为30个亚洲经典建筑之一</div>
+                    </div>
+                </div>
+                <div class="item" style="background-image: url('https://i.ibb.co/FpxzrdM/dms4.jpg');">
+                    <div class="content">
+                        <div class="name">大木山茶室</div>
+                        <div class="des">通过圆形透视湖景，出片圣地</div>
+                    </div>
+                </div>
+                <div class="item" style="background-image: url('https://i.ibb.co/6cC2BFML/ylt1.jpg');">
+                    <div class="content">
+                        <div class="name">玉兰飘韵——玉兰亭</div>
+                        <div class="des">亭边玉兰花开季节，清香浮动，别具诗意</div>
+                    </div>
+                </div>
+                <div class="item" style="background-image: url('https://i.ibb.co/KzctVSZC/1.jpg');">
+                    <div class="content">
+                        <div class="name">人像大片</div>
+                    </div>
+                </div>
+                <div class="item" style="background-image: url('https://i.ibb.co/SXPKXHDt/2.jpg');"></div>
+                <div class="item" style="background-image: url('https://i.ibb.co/6JYhJm5B/3.jpg');"></div>
+                <div class="item" style="background-image: url('https://i.ibb.co/hFBMMQnT/4.jpg');"></div>
+                <div class="item" style="background-image: url('https://i.ibb.co/xKXTcN5x/5.jpg');"></div>
+                <div class="item" style="background-image: url('https://i.ibb.co/chhS0k7g/ymt.jpg');">
+                    <div class="content">
+                        <div class="name">茗思幽情——阅茗亭</div>
+                        <div class="des">坐落茶畦中央，休憩非常，品茗赏景，阅茶阅己</div>
+                    </div>
+                </div>
+                <div class="item" style="background-image: url('https://i.ibb.co/C3qq1czF/xtx.jpg');">
+                    <div class="content">
+                        <div class="name">香溢松阳</div>
+                        <div class="des">茶香弥漫，更显松阳风华</div>
+                    </div>
+                </div>
+                <div class="item" style="background-image: url('https://i.ibb.co/d0s94NKD/axs.jpg');">
+                    <div class="content">
+                        <div class="name">石心半夏</div>
+                        <div class="des">左边“半颗”心石，浪漫拍照圣地</div>
+                    </div>
+                </div>
+                <div class="item" style="background-image: url('https://i.ibb.co/Gvynrjyz/ml.jpg');">
+                    <div class="content">
+                        <div class="name">麦浪茶田</div>
+                        <div class="des">茶麦交织，金绿互映</div>
+                    </div>
+                </div>
+                <div class="item" style="background-image: url('https://i.ibb.co/jvrZ0mwF/cl.jpg');">
+                    <div class="content">
+                        <div class="name">徽影古村</div>
+                        <div class="des">古韵十足的江南村落，处处透出田园风情</div>
+                    </div>
+                </div>
+                <div class="item" style="background-image: url('https://i.ibb.co/ZRHvWwnw/sbl.jpg');">
+                    <div class="content">
+                        <div class="name">石径晓光</div>
+                        <div class="des">石板小径迎曙光，俯瞰茶海如卷</div>
+                    </div>
+                </div>
+                <div class="item" style="background-image: url('https://i.ibb.co/TBXMv8Mr/xt.jpg');">
+                    <div class="content">
+                        <div class="name">竹亭</div>
+                        <div class="des">竹构雅亭，清风生韵，自然之境</div>
+                    </div>
+                </div>
+                <div class="item" style="background-image: url('https://i.ibb.co/7x2vDQVh/cysj.jpg');">
+                    <div class="content">
+                        <div class="name">茶乡山色</div>
+                    </div>
+                </div>
+                <div class="item" style="background-image: url('https://i.ibb.co/VWwg588m/gp.jpg');">
+                    <div class="content">
+                        <div class="name">茶园一隅</div>
+                    </div>
+                </div>
+                <div class="item" style="background-image: url('https://i.ibb.co/NgtNj06q/cn1.jpg');">
+                    <div class="content">
+                        <div class="name">茶农身影</div>
+                    </div>
+                </div>
+                <div class="item" style="background-image: url('https://i.ibb.co/xKnZ7d3Z/cn2.jpg');">
+                    <div class="content">
+                        <div class="name">茶农身影</div>
+                    </div>
+                </div>
+                <div class="item" style="background-image: url('https://i.ibb.co/fYJx7fJD/cc.jpg');">
+                    <div class="content">
+                        <div class="name">采茶体验</div>
+                    </div>
+                </div>
+                <div class="item" style="background-image: url('https://i.ibb.co/sdDbmZMF/rx1.jpg');">
+                    <div class="content">
+                        <div class="name">茶园小径</div>
+                    </div>
+                </div>
+                <div class="item" style="background-image: url('https://i.ibb.co/C5mpdFr5/rx2.jpg');">
+                    <div class="content">
+                        <div class="name">日出剪影</div>
+                    </div>
+                </div>
+
+
+            </div>
+            <div class="button">
+                <button class="prev"><i class="fa-solid fa-arrow-left"></i></button>
+                <button class="next"><i class="fa-solid fa-arrow-right"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // 页面导航功能
+        function showPage(pageId) {
+            document.getElementById('homepage').style.display = 'none';
+            document.getElementById(pageId).style.display = 'block';
+
+            // 如果是地图页面，初始化地图
+            if (pageId === 'map-page' && !window.mapInitialized) {
+                initMap();
+                window.mapInitialized = true;
+            }
+        }
+
+        function backToHome() {
+            document.querySelectorAll('.page').forEach(page => {
+                page.style.display = 'none';
+            });
+            document.getElementById('homepage').style.display = 'flex';
+        }
+
+        // 地图初始化
+        function initMap() {
+            const map = L.map('map', {
+                crs: L.CRS.Simple,
+                minZoom: -1,
+                maxZoom: 5
+            });
+
+            const imageUrl = "https://i.ibb.co/qFWRBK87/dt.jpg";
+            const imageBounds = [[100, 370], [820, 1630]];
+
+            L.imageOverlay(imageUrl, imageBounds).addTo(map);
+            map.setView([500, 1000], 0);
+
+            const markers = [
+                {
+                    pos: [473, 487],
+                    title: "大木山茶室",
+                    img: "https://i.ibb.co/Kc6ktXZh/cs.jpg",
+                    desc: "风格典雅，于2015年登上福布斯最权威的底刊，被评为30个亚洲经典建筑之一"
+                },
+                {
+                    pos: [559, 538],
+                    title: "荷影流波",
+                    img: "https://i.ibb.co/QjKkwmbz/hhc.jpg",
+                    desc: "池畔荷叶田田，夏季映日荷花，景色清雅怡人"
+                },
+                {
+                    pos: [424, 643],
+                    title: "玉兰飘韵——玉兰亭",
+                    img: "https://i.ibb.co/6cC2BFML/ylt1.jpg",
+                    desc: "亭边玉兰花开季节，清香浮动，别具诗意"
+                },
+                {
+                    pos: [542, 699],
+                    title: "茗思幽情——阅茗亭",
+                    img: "https://i.ibb.co/chhS0k7g/ymt.jpg",
+                    desc: "坐落茶畦中央，休憩非常，品茗赏景，阅茶阅己"
+                },
+                {
+                    pos: [643, 567],
+                    title: "香溢松阳",
+                    img: "https://i.ibb.co/C3qq1czF/xtx.jpg",
+                    desc: "茶香弥漫，更显松阳风华"
+                },
+                {
+                    pos: [707, 1311],
+                    title: "大木山游客中心",
+                    img: "https://i.ibb.co/zTxv0Mnz/ykzx.jpg",
+                    desc: "心系茶旅，解说来客之意"
+                },
+                {
+                    pos: [663, 1197],
+                    title: "石心半夏",
+                    img: "https://i.ibb.co/d0s94NKD/axs.jpg",
+                    desc: "左边“半颗”心石，浪漫拍照圣地"
+                },
+                {
+                    pos: [591, 1243],
+                    title: "徽影古村",
+                    img: "https://i.ibb.co/jvrZ0mwF/cl.jpg",
+                    desc: "古韵十足的江南村落，处处透出田园风情"
+                },
+                {
+                    pos: [303, 1265],
+                    title: "矮墙映路",
+                    img: "https://i.ibb.co/MyzK37TV/cql.jpg",
+                    desc: "矮小城墙伴行道，别有风趣"
+                },
+                {
+                    pos: [274, 1385],
+                    title: "麦浪茶田",
+                    img: "https://i.ibb.co/Gvynrjyz/ml.jpg",
+                    desc: "茶麦交织，金绿互映"
+                },
+                {
+                    pos: [240, 1241],
+                    title: "石径晓光",
+                    img: "https://i.ibb.co/ZRHvWwnw/sbl.jpg",
+                    desc: "石板小径迎曙光，俯瞰茶海如卷"
+                },
+                {
+                    pos: [152, 1194],
+                    title: "竹亭",
+                    img: "https://i.ibb.co/TBXMv8Mr/xt.jpg",
+                    desc: "竹构雅亭，清风生韵，自然之境"
+                },
+            ];
+
+            markers.forEach(marker => {
+                L.marker(marker.pos).addTo(map)
+                    .bindPopup(`
+                        <div class="custom-popup">
+                            <h3>${marker.title}</h3>
+                            <img src="${marker.img}" alt="${marker.title}">
+                            <p>${marker.desc}</p>
+                        </div>
+                    `);
+            });
+        }
+
+        // 十景页面轮播功能
+        const $next = document.querySelector('.next');
+        const $prev = document.querySelector('.prev');
+
+        $next.addEventListener('click', () => {
+            const items = document.querySelectorAll('.item');
+            document.querySelector('.slide').appendChild(items[0]);
+        });
+
+        $prev.addEventListener('click', () => {
+            const items = document.querySelectorAll('.item');
+            document.querySelector('.slide').prepend(items[items.length - 1]);
+        });
+    </script>
+</body>
+</html>
